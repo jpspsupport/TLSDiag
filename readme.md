@@ -20,3 +20,5 @@ Simply run this command. It will diagnose the problem for adopting TLS 1.2.
 Please also check the following Blog Article.
 
 https://jpdsi.github.io/blog/internet-explorer-microsoft-edge/dotnet-framework-tls12/
+
+
