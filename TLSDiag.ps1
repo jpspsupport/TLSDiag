@@ -336,7 +336,6 @@ switch($OSVersion.Major)
         return;
     }
 }
-Write-Host "----------------------------------------------" -ForegroundColor Green
 
 
 $TLSDiagResult | Add-Member -MemberType NoteProperty -Name TLSDotNetConfigured -Value $false
@@ -355,12 +354,20 @@ foreach ($oktls in ("Tls12", "SystemDefault", "0"))
 if (!$PSSupported)
 {
     $TLSDiagResult | Add-Member -MemberType NoteProperty -Name PowerShellSecurityProtocol -Value ([System.Net.ServicePointManager]::SecurityProtocol.ToString())
-    if ($Resolve)
+
+    if (!$script:RequireReboot)
     {
-        Write-Host "Please consider specifying the following code in your PowerShell Solution." -Foreground Green
-        Write-Host " [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SolutionProtocolType]::Tls12 " -Foreground Green
+        Write-Host 
+        Write-Host "SecurityProtocol property is not set to SystemDefault or Tls12." -ForegroundColor Green
+        Write-Host "Please consider adding the following code in your PowerShell Solution explicityly." -Foreground Green
+        Write-Host
+        Write-Host "> [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SolutionProtocolType]::Tls12 " -Foreground Green
+        Write-Host
     }
+
 }
+Write-Host "----------------------------------------------" -ForegroundColor Green
+
 
 $TLSDiagResult | fl
 
