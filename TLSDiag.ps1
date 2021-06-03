@@ -209,6 +209,56 @@ function DiagDotNetTLSSetting()
     return $result
 }
 
+function DiagTlsCipherSuite($IsLegacy = $false)
+{
+    $TLSDiagResult | Add-Member -MemberType NoteProperty -Name TLSCipherSuiteSupported -Value $false
+
+    $CipherList = $null;
+    if ($IsLegacy)
+    {
+        $key = get-item "HKLM:\SYSTEM\CurrentControlSet\Control\Cryptography\Configuration\Local\Default\00010002"
+        $CipherList = $key.GetValue("Functions").Split(",");
+    }
+    else
+    {
+        $CipherList = (Get-TlsCipherSuite).Name;
+    }
+    $CipherList |% {
+        foreach ($cs in $O365SupportedCipherSuites)
+        {
+            if ($cs -eq $_)
+            {
+                $TLSDiagResult.TLSCipherSuiteSupported = $true
+            }
+        }
+    }
+
+    if (!$TLSDiagResult.TLSCipherSuiteSupported)
+    {
+        if ($IsLegacy)
+        {
+            Write-Host "Cipher Suite Order configuration might be required!" -Foreground Green
+            Write-Host " 1. Open the Group Policy Editor (Either gpedit.msc or gpmc.msc)" -Foreground Green
+            Write-host " 2. Computer Configuration - Administrative Templates - Network - SSL Configuration Settings" -Foreground Green
+            Write-Host " 3. Open SSL Cipher Suite Order" -Foreground Green
+            Write-Host " 4. Enable either of the following supported TLS 1.2 CipherSuites in the top order." -Foreground Green
+            $O365SupportedCipherSuites |% { Write-Host ("  " + $_)  -Foreground Green}
+            Write-Host " Refer https://docs.microsoft.com/en-us/sharepoint/troubleshoot/administration/authentication-errors-tls12-support " -Foreground Green
+        }
+
+        if ($Resolve)
+        {
+            if (!$IsLegacy)
+            {
+                Enable-TlsCipherSuite -Name "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384" -Position 0
+            }
+        }
+    }
+
+
+}
+
+
 
 Write-Host "----------------------------------------------" -ForegroundColor Green
 
@@ -250,6 +300,7 @@ switch($OSVersion.Major)
                 throw "This script is not supported in this machine."
             }
         }
+        DiagTlsCipherSuite -IsLegacy $true
         break;
     }
     10 {
@@ -262,24 +313,7 @@ switch($OSVersion.Major)
 
         $TLSDiagResult.TLS12Supported = $true;
 
-        $TLSDiagResult | Add-Member -MemberType NoteProperty -Name TLSCSSupported -Value $false
-        (Get-TlsCipherSuite).Name |% {
-            foreach ($cs in $O365SupportedCipherSuites)
-            {
-                if ($cs -eq $_)
-                {
-                    $TLSDiagResult.TLSCSSupported = $true
-                }
-            }
-        }
-
-        if (!$TLSDiagResult.TLS12Supported)
-        {
-            if ($Resolve)
-            {
-                Enable-TlsCipherSuite -Name "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384" -Position 0
-            }
-        }
+        DiagTlsCipherSuite
 
         break;
     }
@@ -309,8 +343,8 @@ if (!$PSSupported)
     $TLSDiagResult | Add-Member -MemberType NoteProperty -Name PowerShellSecurityProtocol -Value ([System.Net.ServicePointManager]::SecurityProtocol.ToString())
     if ($Resolve)
     {
-        Write-Host "Please specify the following code in your PowerShell Solution."
-        Write-Host " [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SolutionProtocolType]::Tls12 "
+        Write-Host "Please consider specifying the following code in your PowerShell Solution." -Foreground Green
+        Write-Host " [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SolutionProtocolType]::Tls12 " -Foreground Green
     }
 }
 

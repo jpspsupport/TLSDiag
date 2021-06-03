@@ -8,13 +8,24 @@ Simply run this command. It will diagnose the problem for adopting TLS 1.2.
 |---|---|---|
 |-Resolve|Switch|(Admin Privileges Required) If you would like to fix the configuration automatically, please add this switch parameter.|
 
-## Example 1
+### Example 1
 
 .\TLSDiag.ps1
 
-## Example 2 
+### Example 2 
 
 .\TLSDiag.ps1 -Resolve
+
+## Output
+
+*Main Result*
+|Flags|Alert Value|Description|
+|---|---|---|
+|TLS12Supported|False| Whether Windows OS registry configuration is configured.|
+|TLS12CipherSuiteSupported|False| Whether the supported CipherSuite for M365 has been enabled.|
+|TLSDotNetconfigured|False| Whether .NET 3.5 and 4.0 - 4.5 has been configured for using TLS1.2. |
+
+We have some other sub-results that explain what was not configured.
 
 ## Reference
 Please also check the following Blog Article.
