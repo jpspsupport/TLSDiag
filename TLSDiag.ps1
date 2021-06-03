@@ -326,8 +326,9 @@ switch($OSVersion.Major)
 Write-Host "----------------------------------------------" -ForegroundColor Green
 
 
+$TLSDiagResult | Add-Member -MemberType NoteProperty -Name TLSDotNetConfigured -Value $false
 $DotNetresult = (DiagDotNetTLSSetting);
-$TLSDiagResult | Add-Member -MemberType NoteProperty -Name TLSDotNetConfigured -Value $DotNetResult
+$TLSDiagResult.TLSDotnetConfigured = $DotNetResult
 
 $PSSupported = $false
 foreach ($oktls in ("Tls12", "SystemDefault", "0"))
